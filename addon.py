@@ -39,8 +39,6 @@ import xbmcgui
 import xbmcaddon
 import xbmcplugin
 
-from xml.dom.minidom import parse, parseString
-
 CommonRootView = 50
 FullWidthList = 51
 ThumbnailView = 500
