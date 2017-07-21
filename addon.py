@@ -67,76 +67,33 @@ class DeluxeMusic(object):
         return result 
 
     def showSelector(self):
-    
+ 
         xbmc.log('- main selector -')
 
         # add live channel
-        self.addPicture2Item('Deluxe Music LIVE', PATH + '?categories=%s' % 'live', ICON, BACKG)
+        pic = os.path.join(ADDON.getAddonInfo('path'), 'icon_live.png')
+        self.addPicture2Item('Deluxe Music LIVE', PATH + '?categories=%s' % 'live', pic, BACKG)
         # add audio channel
-        self.addPicture2Item('Deluxe Music Audio', PATH + '?categories=%s' % 'audio', ICON, BACKG)
+        pic = os.path.join(ADDON.getAddonInfo('path'), 'icon_audio.png')
+        self.addPicture2Item('Deluxe Music Audio', PATH + '?categories=%s' % 'audio', pic, BACKG)
+        # add mediathek
+        pic = os.path.join(ADDON.getAddonInfo('path'), 'icon_mediathek.png')
+        self.addPicture2Item('Deluxe Music Mediathek', PATH + '?categories=%s' % 'media', pic, BACKG)
+        # add VideoOfWeek
+        pic = os.path.join(ADDON.getAddonInfo('path'), 'icon_week.png')
+        self.addPicture2Item('Deluxe Music Video of the Week', PATH + '?categories=%s' % 'week', pic, BACKG)
 
-        # get mediathek channels
-        
-        link = 'https://www.deluxemusic.tv/mediathek.html'
-        data = self.getHTML(link)    
-        soup = BeautifulSoup(data)
-
-        # search pictures etc
-        table = soup.find('div' , {'class' : 'background-wrapper'} ) 
-        tables = table.findAll('div' , {'class' : 'csc-default'})
-
-        title = ''
-        link = ''
-        fanart = ''
-        thumb = ''
-
-        for one in tables:
-            intro = one.find('div' , {'class' : 'egodeluxeelement egodeluxeelement-intro'})
-            if intro is not None:
-                # we found a new element
-                link = ''
-                fanart = ''
-                title = ''
-                thumb = ''
-
-                style = intro['style']
-                if style is not None:
-                    match = re.search('background:url.\'(?P<fanart>.*?)\'', style)
-                    if(match != None):
-                        fanart = 'https://www.deluxemusic.tv' + match.group('fanart')
-
-                header = intro.find('h1')
-                if header is not None:
-                    # we found a headline
-                    title = header.text
-
-                    image = intro.find('img')
-                    if image is not None:
-                        thumb = 'https://www.deluxemusic.tv' + image['src']
-
-            iframe = one.find('iframe')
-            if iframe is not None:
-                if(link is ''):
-                    link = iframe['src']
-
-                    p = link.find('playlist_id=')
-                    if(p>0):
-                        id = link[p+12:]
-                        
-                        #self.addPictureItem(title, PATH + '?categories=%s' % id, thumb)
-                        self.addPicture2Item(title, PATH + '?categories=%s' % id, thumb, fanart)
-        
         #xbmc.executebuiltin('Container.SetViewMode(%d)' % ThumbnailView)
         xbmcplugin.endOfDirectory(HANDLE)
 
     def showCategory(self, url):
 
         xbmc.log('- show category %s -' % url)
-        
+
         if(url == 'live'):
-        
+
             xbmc.executebuiltin('Notification(Deluxe Music,Getting live channel, 2000)') 
-            
+
             link = 'https://www.deluxemusic.tv/tv.html'
             data = self.getHTML(link)    
             soup = BeautifulSoup(data)
@@ -158,35 +115,142 @@ class DeluxeMusic(object):
         elif (url == 'audio'):
 
             link = 'https://www.deluxemusic.tv/radio/music.html'
+           
+            data = self.getHTML(link)
+            soup = BeautifulSoup(data)
+
+            table = soup.find('div' , {'class' : 'audioplayer'} ) 
+            if table is not None:
+                tables = table.findAll('div')
+
+                image = ''
+                link = ''
+                title = ''
+
+                for item in tables:
+
+                    if(item["class"] == 'image'):
+                        img = item.find('img')
+                        image = 'https://www.deluxemusic.tv' + img['src']
+                    if(item["class"] == 'info'):
+                        title = item.parent['class'].replace('_',' ')
+                    if(item["class"] == 'link'):
+                        lnk = item.find('a')
+                        link = lnk['href']
+                        link = link.replace('.html','')
+                        link = link.replace('/radio/','')
+
+                        self.addMediaItem(title, PATH + '?playAudio=%s' % link, image)
+
+                #xbmc.executebuiltin('Container.SetViewMode(%d)' % ThumbnailView)
+                xbmcplugin.endOfDirectory(HANDLE)
+        
+        elif (url == 'media'):
+
+            # get mediathek channels
+
+            link = 'https://www.deluxemusic.tv/mediathek.html'
 
             data = self.getHTML(link)    
             soup = BeautifulSoup(data)
 
-            table = soup.find('div' , {'class' : 'audioplayer'} ) 
-            tables = table.findAll('div')
+            # search pictures etc
+            table = soup.find('div' , {'class' : 'background-wrapper'} )
+            if table is not None:
+                tables = table.findAll('div' , {'class' : 'csc-default'})
 
-            image = ''
-            link = ''
-            title = ''
+                title = ''
+                link = ''
+                fanart = ''
+                thumb = ''
 
-            for item in tables:
+                for one in tables:
+                    intro = one.find('div' , {'class' : 'egodeluxeelement egodeluxeelement-intro'})
+                    if intro is not None:
+                        # we found a new element
+                        link = ''
+                        fanart = ''
+                        title = ''
+                        thumb = ''
 
-                if(item["class"] == 'image'):
-                    img = item.find('img')
-                    image = 'https://www.deluxemusic.tv' + img['src']
-                if(item["class"] == 'info'):
-                    title = item.parent['class'].replace('_',' ')
-                if(item["class"] == 'link'):
-                    lnk = item.find('a')
-                    link = lnk['href']
-                    link = link.replace('.html','')
-                    link = link.replace('/radio/','')
+                        style = intro['style']
+                        if style is not None:
+                            match = re.search('background:url.\'(?P<fanart>.*?)\'', style)
+                            if(match != None):
+                                fanart = 'https://www.deluxemusic.tv' + match.group('fanart')
 
-                    self.addMediaItem(title, PATH + '?playAudio=%s' % link, image)
+                        header = intro.find('h1')
+                        if header is not None:
+                            # we found a headline
+                            title = header.text
 
-            #xbmc.executebuiltin('Container.SetViewMode(%d)' % ThumbnailView)
-            xbmcplugin.endOfDirectory(HANDLE)
-            
+                            image = intro.find('img')
+                            if image is not None:
+                                thumb = 'https://www.deluxemusic.tv' + image['src']
+
+                    iframe = one.find('iframe')
+                    if iframe is not None:
+                        if(link is ''):
+                            link = iframe['src']
+
+                            p = link.find('playlist_id=')
+                            if(p>0):
+                                id = link[p+12:]
+
+                                #self.addPictureItem(title, PATH + '?categories=%s' % id, thumb)
+                                self.addPicture2Item(title, PATH + '?categories=%s' % id, '', fanart)
+
+                #xbmc.executebuiltin('Container.SetViewMode(%d)' % ThumbnailView)
+                xbmcplugin.endOfDirectory(HANDLE)
+
+        elif (url == 'week'):
+
+            # get video of the week
+
+            link = 'https://www.deluxemusic.tv/video-of-the-week.html'
+
+            data = self.getHTML(link)    
+            soup = BeautifulSoup(data)
+     
+            iframe = soup.find('iframe')
+            if iframe is not None:
+                link = iframe['src']
+
+                p = link.find('playlist_id=')
+                if(p>0):
+                    id = link[p+12:]
+                        
+                    load = 'https://deluxetv-vimp.mivitec.net/playlist_embed/search_playlist_videos.php'
+
+                    data = {'playlist_id' : id}
+                    data = urllib.urlencode(data)
+
+                    header = { 'Host' : 'deluxetv-vimp.mivitec.net' ,
+                             'Accept' : '*/*',
+                             'User-Agent' : 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:54.0) Gecko/20100101 Firefox/54.0',
+                             'Accept-Language' : 'de,en-US;q=0.7,en;q=0.3',
+                             'Accept-Encoding' : 'gzip, deflate',
+                             'Content-Type' : 'application/x-www-form-urlencoded; charset=UTF-8',
+                             'Referer' : 'https://deluxetv-vimp.mivitec.net/playlist_embed/playlist.php?playlist_id=' + url,
+                             'X-Requested-With' : 'XMLHttpRequest'
+                             }
+
+                    r = requests.post(url = load, data = data, headers = header)
+                    js = json.loads(r.text)
+
+                    for x in xrange(0,len(js)):
+
+                        dur = js[x]['duration']
+                        key = js[x]['mediakey']
+                        desc = js[x]['description']
+                        title = js[x]['title']
+                        thumb = 'https://deluxetv-vimp.mivitec.net/playlist_embed/thumbs/' + js[x]['thumbnail_filename']
+
+                        self.addMediaItem(title, PATH + '?subitem=%s' % key, thumb)
+
+                    #xbmc.executebuiltin('Container.SetViewMode(%d)' % ThumbnailView)
+                    xbmcplugin.endOfDirectory(HANDLE)
+
         else:
 
             load = 'https://deluxetv-vimp.mivitec.net/playlist_embed/search_playlist_videos.php'
@@ -241,7 +305,7 @@ class DeluxeMusic(object):
         table = soup.find('audio')
         if table is not None:
             link = table['src']
-            
+
             xbmc.log('- file - ' + link)       
             xbmc.Player().play(link)
 
@@ -251,7 +315,7 @@ class DeluxeMusic(object):
     def addFolderItem(self, title, url):
         list_item = xbmcgui.ListItem(label=title)
         xbmcplugin.addDirectoryItem(HANDLE, url, list_item, True)
-        
+
     def addPictureItem(self, title, url, thumb):
 
         list_item = xbmcgui.ListItem(label=title, thumbnailImage=thumb)
@@ -270,7 +334,7 @@ class DeluxeMusic(object):
                           'fanart': fanart}) 
 
         xbmcplugin.addDirectoryItem(HANDLE, url, list_item, True)
-        
+
     def addMediaItem(self, title, url, thumb):
 
         list_item = xbmcgui.ListItem(label=title, thumbnailImage=thumb)
@@ -287,32 +351,32 @@ if __name__ == '__main__':
 
     ADDON = xbmcaddon.Addon()
     ADDON_NAME = ADDON.getAddonInfo('name')
-    
+
     PATH = sys.argv[0]
     HANDLE = int(sys.argv[1])
     PARAMS = urlparse.parse_qs(sys.argv[2][1:])
 
     ICON = os.path.join(ADDON.getAddonInfo('path'), 'icon.png')
     BACKG = os.path.join(ADDON.getAddonInfo('path'), 'fanart.jpg')
-   
+
     DEBUG_PLUGIN = True
     DEBUG_HTML = False
     USE_THUMBS = True
-    
+
     ERROR_MESSAGE1 = ADDON.getLocalizedString(30150)
     ERROR_MESSAGE2 = ADDON.getLocalizedString(30151)
     ERROR_MESSAGE3 = ADDON.getLocalizedString(30152)
-    
+
     if(str(xbmcplugin.getSetting(HANDLE, 'debug')) == 'true'):
         DEBUG_PLUGIN = True
     if(str(xbmcplugin.getSetting(HANDLE, 'debugHTML')) == 'true'):
         DEBUG_HTML = True
-       
+
     SITE = xbmcplugin.getSetting(HANDLE, 'siteVersion')    
 
 try:
         deluxe = DeluxeMusic()
-            
+
         if PARAMS.has_key('categories'):
             deluxe.showCategory(PARAMS['categories'][0])
         elif PARAMS.has_key('subitem'):
