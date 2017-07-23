@@ -45,11 +45,6 @@ ThumbnailView = 500
 PictureWrapView = 510
 PictureThumbView = 514
 
-#place holder for error message
-ERROR_MESSAGE1 = 'line 1'
-ERROR_MESSAGE2 = 'line 2'
-ERROR_MESSAGE3 = 'line 3'
-
 class DeluxeMusic(object):
 
     def getHTML(self, link):
@@ -65,8 +60,9 @@ class DeluxeMusic(object):
         return result 
 
     def showSelector(self):
- 
-        xbmc.log('- main selector -')
+
+        if(DEBUG_PLUGIN):
+            xbmc.log('- main selector -')
 
         # add live channel
         pic = os.path.join(ADDON.getAddonInfo('path'), 'icon_live.png')
@@ -81,12 +77,12 @@ class DeluxeMusic(object):
         pic = os.path.join(ADDON.getAddonInfo('path'), 'icon_week.png')
         self.addPicture2Item('Deluxe Music Video of the Week', PATH + '?categories=%s' % 'week', pic, BACKG)
 
-        #xbmc.executebuiltin('Container.SetViewMode(%d)' % ThumbnailView)
         xbmcplugin.endOfDirectory(HANDLE)
 
     def showCategory(self, url):
 
-        xbmc.log('- show category %s -' % url)
+        if(DEBUG_PLUGIN):
+            xbmc.log('- show category %s -' % url)
 
         if(url == 'live'):
 
@@ -108,12 +104,17 @@ class DeluxeMusic(object):
                 if source is not None:
                     play = source['src']
 
-                    xbmc.log('- file - ' + play)       
+                    if(not USE_HTTPS):
+                        play = play.replace('https','http')
+
+                    if(DEBUG_PLUGIN):
+                        xbmc.log('- file - ' + play)       
                     xbmc.Player().play(play)
+
         elif (url == 'audio'):
 
             link = 'https://www.deluxemusic.tv/radio/music.html'
-           
+
             data = self.getHTML(link)
             soup = BeautifulSoup(data)
 
@@ -140,7 +141,6 @@ class DeluxeMusic(object):
 
                         self.addMediaItem(title, PATH + '?playAudio=%s' % link, image)
 
-                #xbmc.executebuiltin('Container.SetViewMode(%d)' % ThumbnailView)
                 xbmcplugin.endOfDirectory(HANDLE)
         
         elif (url == 'media'):
@@ -195,10 +195,8 @@ class DeluxeMusic(object):
                             if(p>0):
                                 id = link[p+12:]
 
-                                #self.addPictureItem(title, PATH + '?categories=%s' % id, thumb)
                                 self.addPicture2Item(title, PATH + '?categories=%s' % id, '', fanart)
 
-                #xbmc.executebuiltin('Container.SetViewMode(%d)' % ThumbnailView)
                 xbmcplugin.endOfDirectory(HANDLE)
 
         elif (url == 'week'):
@@ -246,7 +244,6 @@ class DeluxeMusic(object):
 
                         self.addMediaItem(title, PATH + '?subitem=%s' % key, thumb)
 
-                    #xbmc.executebuiltin('Container.SetViewMode(%d)' % ThumbnailView)
                     xbmcplugin.endOfDirectory(HANDLE)
 
         else:
@@ -279,21 +276,23 @@ class DeluxeMusic(object):
 
                 self.addMediaItem(title, PATH + '?subitem=%s' % key, thumb)
 
-            #xbmc.executebuiltin('Container.SetViewMode(%d)' % ThumbnailView)
             xbmcplugin.endOfDirectory(HANDLE)
 
     def showSubtitem(self, url):
 
-        xbmc.log('- show subitem %s -' % url)
+        if(DEBUG_PLUGIN):
+            xbmc.log('- show subitem %s -' % url)
 
         link = 'https://deluxetv-vimp.mivitec.net/getMedium/' + url + ".mp4"
-            
-        xbmc.log('- file - ' + link)       
+
+        if(DEBUG_PLUGIN):
+            xbmc.log('- file - ' + link)       
         xbmc.Player().play(link)
 
     def playAudio(self, audio):
 
-        xbmc.log('- show playAudio %s -' % audio)
+        if(DEBUG_PLUGIN):
+            xbmc.log('- show playAudio %s -' % audio)
 
         link = 'https://www.deluxemusic.tv/radio/' + audio + ".html"
 
@@ -304,7 +303,8 @@ class DeluxeMusic(object):
         if table is not None:
             link = table['src']
 
-            xbmc.log('- file - ' + link)       
+            if(DEBUG_PLUGIN):
+                xbmc.log('- file - ' + link)       
             xbmc.Player().play(link)
 
 
@@ -317,16 +317,14 @@ class DeluxeMusic(object):
     def addPictureItem(self, title, url, thumb):
 
         list_item = xbmcgui.ListItem(label=title, thumbnailImage=thumb)
-
         list_item.setArt({'thumb': thumb,
                           'icon': thumb}) 
 
         xbmcplugin.addDirectoryItem(HANDLE, url, list_item, True)
-        
+
     def addPicture2Item(self, title, url, thumb, fanart):
 
         list_item = xbmcgui.ListItem(label=title, thumbnailImage=thumb)
-
         list_item.setArt({'thumb': thumb,
                           'icon': thumb,
                           'fanart': fanart}) 
@@ -336,13 +334,12 @@ class DeluxeMusic(object):
     def addMediaItem(self, title, url, thumb):
 
         list_item = xbmcgui.ListItem(label=title, thumbnailImage=thumb)
-
         list_item.setArt({'thumb': thumb,
                           'icon': thumb,
                           'fanart': BACKG}) 
-                    
+
         xbmcplugin.addDirectoryItem(HANDLE, url, list_item, False)
-        
+
 #### main entry point ####
 
 if __name__ == '__main__':
@@ -357,20 +354,13 @@ if __name__ == '__main__':
     ICON = os.path.join(ADDON.getAddonInfo('path'), 'icon.png')
     BACKG = os.path.join(ADDON.getAddonInfo('path'), 'fanart.jpg')
 
-    DEBUG_PLUGIN = True
-    DEBUG_HTML = False
-    USE_THUMBS = True
-
-    ERROR_MESSAGE1 = ADDON.getLocalizedString(30150)
-    ERROR_MESSAGE2 = ADDON.getLocalizedString(30151)
-    ERROR_MESSAGE3 = ADDON.getLocalizedString(30152)
+    DEBUG_PLUGIN = False;
+    USE_HTTPS = False;
 
     if(str(xbmcplugin.getSetting(HANDLE, 'debug')) == 'true'):
         DEBUG_PLUGIN = True
-    if(str(xbmcplugin.getSetting(HANDLE, 'debugHTML')) == 'true'):
-        DEBUG_HTML = True
-
-    SITE = xbmcplugin.getSetting(HANDLE, 'siteVersion')    
+    if(str(xbmcplugin.getSetting(HANDLE, 'https')) == 'true'):
+        USE_HTTPS = True
 
 try:
         deluxe = DeluxeMusic()

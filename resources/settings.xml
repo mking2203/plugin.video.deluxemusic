@@ -1,0 +1,7 @@
+<?xml version ="1.0" encoding="utf-8" standalone="yes"?>
+<settings>
+  <category label="30000">
+    <setting id="debug" type="bool" label="30010" default="false"/>
+    <setting id="https" type="bool" label="30011" default="false"/>
+  </category>
+</settings>

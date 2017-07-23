@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<addon id="plugin.video.deluxemusic" version="1.0.2" name="Deluxe Music" provider-name="M. King">
+<addon id="plugin.video.deluxemusic" version="1.0.3" name="Deluxe Music" provider-name="M. King">
     <requires>
         <import addon="xbmc.python" version="2.7.0"/>
         <import addon="xbmc.addon" version="13.0.0" />
@@ -14,14 +14,14 @@
     <extension point="xbmc.addon.metadata">
         <summary lang="de">Deluxemusic - Music Television</summary>
         <summary lang="en">Deluxemusic - Music Television</summary>
-        <description lang="de">Deluxemusic - Music Television</description>
+        <description lang="de">Echtes Musikfernsehen. Kostenloser Musik TV-Sender und Radio-Livestream rund um die Uhr mit den Perlen aus sechs Jahrzehnten Musikgeschichte.</description>
         <description lang="en">Deluxemusic - Music Television</description>
         <license>GPL 2.0</license>
         <platform>all</platform>
-        <language>en</language>
+        <language>en,de</language>
         <email>mking2203@yahoo.com</email>
-        <website></website>
-        <source></source>
+        <website>https://www.kodinerds.net/index.php/Thread/57551-Release-Deluxe-Music-TV</website>
+        <source>https://github.com/mking2203/plugin.video.deluxemusic</source>
         <assets>
             <icon>icon.png</icon>
             <fanart>fanart.jpg</fanart>
