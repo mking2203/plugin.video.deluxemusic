@@ -86,30 +86,21 @@ class DeluxeMusic(object):
 
         if(url == 'live'):
 
-            xbmc.executebuiltin('Notification(Deluxe Music,Getting live channel, 2000)') 
+            link = 'https://event.mivitec.net/dist/js/ads_https2.js'
+            data = self.getHTML(link)
+            
+            match = re.search('player.src.*?src:."(?P<video>.*?)"', data)
+            if(match != None):
+            
+                play = match.group('video')            
+                if(not USE_HTTPS):
+                    play = play.replace('https','http')
 
-            link = 'https://www.deluxemusic.tv/tv.html'
-            data = self.getHTML(link)    
-            soup = BeautifulSoup(data)
-
-            # search for highlights
-            iframe = soup.find('iframe') 
-            if iframe is not None:
-                page = iframe['src']
-
-                data = self.getHTML(page)
-                soup = BeautifulSoup(data)
-
-                source = soup.find('source') 
-                if source is not None:
-                    play = source['src']
-
-                    if(not USE_HTTPS):
-                        play = play.replace('https','http')
-
-                    if(DEBUG_PLUGIN):
-                        xbmc.log('- file - ' + play)       
-                    xbmc.Player().play(play)
+                if(DEBUG_PLUGIN):
+                    xbmc.log('- file - ' + play)       
+                xbmc.Player().play(play)
+            else:
+                xbmc.executebuiltin('Notification(Deluxe Music,Nothing to play, 2000)') 
 
         elif (url == 'audio'):
 
