@@ -28,7 +28,7 @@ import re
 import mechanize
 import requests
 
-from BeautifulSoup import BeautifulSoup 
+from BeautifulSoup import BeautifulSoup
 
 import buggalo
 
@@ -48,16 +48,16 @@ PictureThumbView = 514
 class DeluxeMusic(object):
 
     def getHTML(self, link):
-    
+
         # init browser
         br = mechanize.Browser()
         br.set_handle_robots(False)
         #br.set_handle_gzip(True)
-    
+
         response = br.open(link)
-        result = response.read()    
-        
-        return result 
+        result = response.read()
+
+        return result
 
     def showSelector(self):
 
@@ -88,19 +88,19 @@ class DeluxeMusic(object):
 
             link = 'https://event.mivitec.net/dist/js/ads_https2.js'
             data = self.getHTML(link)
-            
+
             match = re.search('player.src.*?src:."(?P<video>.*?)"', data)
             if(match != None):
-            
-                play = match.group('video')            
+
+                play = match.group('video')
                 if(not USE_HTTPS):
                     play = play.replace('https','http')
 
                 if(DEBUG_PLUGIN):
-                    xbmc.log('- file - ' + play)       
+                    xbmc.log('- file - ' + play)
                 xbmc.Player().play(play)
             else:
-                xbmc.executebuiltin('Notification(Deluxe Music,Nothing to play, 2000)') 
+                xbmc.executebuiltin('Notification(Deluxe Music,Nothing to play, 2000)')
 
         elif (url == 'audio'):
 
@@ -109,7 +109,7 @@ class DeluxeMusic(object):
             data = self.getHTML(link)
             soup = BeautifulSoup(data)
 
-            table = soup.find('div' , {'class' : 'audioplayer'} ) 
+            table = soup.find('div' , {'class' : 'audioplayer'} )
             if table is not None:
                 tables = table.findAll('div')
 
@@ -133,109 +133,79 @@ class DeluxeMusic(object):
                         self.addMediaItem(title, PATH + '?playAudio=%s' % link, image)
 
                 xbmcplugin.endOfDirectory(HANDLE)
-        
+
         elif (url == 'media'):
 
-            # get mediathek channels
+            thumb =''
+            title =''
+            idNo=''
 
+            # get mediathek channels
             link = 'https://www.deluxemusic.tv/mediathek.html'
 
-            data = self.getHTML(link)    
+            data = self.getHTML(link)
             soup = BeautifulSoup(data)
 
-            # search pictures etc
-            table = soup.find('div' , {'class' : 'background-wrapper'} )
-            if table is not None:
-                tables = table.findAll('div' , {'class' : 'csc-default'})
+            tables = soup.findAll('div' , {'class' : 'csc-default'})
 
-                title = ''
-                link = ''
-                fanart = ''
-                thumb = ''
+            for one in tables:
 
-                for one in tables:
-                    intro = one.find('div' , {'class' : 'egodeluxeelement egodeluxeelement-intro'})
-                    if intro is not None:
-                        # we found a new element
-                        link = ''
-                        fanart = ''
-                        title = ''
-                        thumb = ''
+                intro = one.find('div' , {'class' : 'egodeluxeelement egodeluxeelement-intro'})
+                if intro is not None:
 
-                        style = intro['style']
-                        if style is not None:
-                            match = re.search('background:url.\'(?P<fanart>.*?)\'', style)
-                            if(match != None):
-                                fanart = 'https://www.deluxemusic.tv' + match.group('fanart')
+                    m = re.search('<img.src=\"(.*?)\"', str(intro))
+                    if(m != None):
+                        thumb =  'https://www.deluxemusic.tv' + m.group(1)
 
-                        header = intro.find('h1')
-                        if header is not None:
-                            # we found a headline
-                            title = header.text
+                    m = re.search('<header.*?<a.href=.*?>(.*?)\<', str(intro))
+                    if(m != None):
+                        title =  m.group(1)
 
-                            image = intro.find('img')
-                            if image is not None:
-                                thumb = 'https://www.deluxemusic.tv' + image['src']
+                intro = one.find('div' , {'class' : 'egodeluxeelement'})
+                if intro is not None:
 
-                    iframe = one.find('iframe')
-                    if iframe is not None:
-                        if(link is ''):
-                            link = iframe['src']
+                    m = re.search('<deluxe-playlist.playlist_id=\"(.*?)\"', str(intro))
+                    if(m != None):
+                        idNo = m.group(1)
+                        self.addPicture2Item(title, PATH + '?categories=%s' % idNo, '', thumb)
 
-                            p = link.find('playlist_id=')
-                            if(p>0):
-                                id = link[p+12:]
-
-                                self.addPicture2Item(title, PATH + '?categories=%s' % id, '', fanart)
-
-                xbmcplugin.endOfDirectory(HANDLE)
+            xbmcplugin.endOfDirectory(HANDLE)
 
         elif (url == 'week'):
 
             # get video of the week
-
             link = 'https://www.deluxemusic.tv/video-of-the-week.html'
+            data = self.getHTML(link)
 
-            data = self.getHTML(link)    
-            soup = BeautifulSoup(data)
-     
-            iframe = soup.find('iframe')
-            if iframe is not None:
-                link = iframe['src']
+            # <deluxe-playlist playlist_id="21">
+            m = re.search('<deluxe-playlist.playlist_id="(.*?)">', data)
+            if(m != None):
+                idNo = m.group(1)
 
-                p = link.find('playlist_id=')
-                if(p>0):
-                    id = link[p+12:]
-                        
-                    load = 'https://deluxetv-vimp.mivitec.net/playlist_embed/search_playlist_videos.php'
+                # api-endpoint
+                URL = "https://deluxetv-vimp.mivitec.net/playlist_tag/search_playlist_videos.php"
 
-                    data = {'playlist_id' : id}
-                    data = urllib.urlencode(data)
+                # defining a params dict for the parameters to be sent to the API
+                DATA = {'playlist_id' : idNo}
 
-                    header = { 'Host' : 'deluxetv-vimp.mivitec.net' ,
-                             'Accept' : '*/*',
-                             'User-Agent' : 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:54.0) Gecko/20100101 Firefox/54.0',
-                             'Accept-Language' : 'de,en-US;q=0.7,en;q=0.3',
-                             'Accept-Encoding' : 'gzip, deflate',
-                             'Content-Type' : 'application/x-www-form-urlencoded; charset=UTF-8',
-                             'Referer' : 'https://deluxetv-vimp.mivitec.net/playlist_embed/playlist.php?playlist_id=' + url,
-                             'X-Requested-With' : 'XMLHttpRequest'
-                             }
+                HEADER =  {'Referer' : 'https://www.deluxemusic.tv/video-of-the-week.html',
+                           'Origin' : 'https://www.deluxemusic.tv'}
 
-                    r = requests.post(url = load, data = data, headers = header)
-                    js = json.loads(r.text)
+                # sending get request and saving the response as response object
+                r = requests.post(url = URL, data = DATA, headers = HEADER)
 
-                    for x in xrange(0,len(js)):
+                # extracting data in json format
+                data = r.json()
 
-                        dur = js[x]['duration']
-                        key = js[x]['mediakey']
-                        desc = js[x]['description']
-                        title = js[x]['title']
-                        thumb = 'https://deluxetv-vimp.mivitec.net/playlist_embed/thumbs/' + js[x]['thumbnail_filename']
+                key = data[0]['mediakey']
+                title = data[0]['title']
+                name = data[0]['thumbnail_filename']
 
-                        self.addMediaItem(title, PATH + '?subitem=%s' % key, thumb)
+                thumb = 'https://deluxetv-vimp.mivitec.net/playlist_embed/thumbs/' + name
 
-                    xbmcplugin.endOfDirectory(HANDLE)
+                self.addMediaItem(title, PATH + '?subitem=%s' % key, thumb)
+
+            xbmcplugin.endOfDirectory(HANDLE)
 
         else:
 
@@ -277,7 +247,7 @@ class DeluxeMusic(object):
         link = 'https://deluxetv-vimp.mivitec.net/getMedium/' + url + ".mp4"
 
         if(DEBUG_PLUGIN):
-            xbmc.log('- file - ' + link)       
+            xbmc.log('- file - ' + link)
         xbmc.Player().play(link)
 
     def playAudio(self, audio):
@@ -287,7 +257,7 @@ class DeluxeMusic(object):
 
         link = 'https://www.deluxemusic.tv/radio/' + audio + ".html"
 
-        data = self.getHTML(link)    
+        data = self.getHTML(link)
         soup = BeautifulSoup(data)
 
         table = soup.find('audio')
@@ -295,7 +265,7 @@ class DeluxeMusic(object):
             link = table['src']
 
             if(DEBUG_PLUGIN):
-                xbmc.log('- file - ' + link)       
+                xbmc.log('- file - ' + link)
             xbmc.Player().play(link)
 
 
@@ -309,7 +279,7 @@ class DeluxeMusic(object):
 
         list_item = xbmcgui.ListItem(label=title, thumbnailImage=thumb)
         list_item.setArt({'thumb': thumb,
-                          'icon': thumb}) 
+                          'icon': thumb})
 
         xbmcplugin.addDirectoryItem(HANDLE, url, list_item, True)
 
@@ -318,7 +288,7 @@ class DeluxeMusic(object):
         list_item = xbmcgui.ListItem(label=title, thumbnailImage=thumb)
         list_item.setArt({'thumb': thumb,
                           'icon': thumb,
-                          'fanart': fanart}) 
+                          'fanart': fanart})
 
         xbmcplugin.addDirectoryItem(HANDLE, url, list_item, True)
 
@@ -327,7 +297,7 @@ class DeluxeMusic(object):
         list_item = xbmcgui.ListItem(label=title, thumbnailImage=thumb)
         list_item.setArt({'thumb': thumb,
                           'icon': thumb,
-                          'fanart': BACKG}) 
+                          'fanart': BACKG})
 
         xbmcplugin.addDirectoryItem(HANDLE, url, list_item, False)
 
@@ -365,4 +335,4 @@ try:
         else:
             deluxe.showSelector()
 except Exception:
-    buggalo.onExceptionRaised() 
+    buggalo.onExceptionRaised()
