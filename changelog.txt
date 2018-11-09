@@ -1,9 +1,11 @@
-[B]Version 1.0.4
+[B]Version 1.0.5 2018-11-09[/B]
+website changed, mediathek and video of the week
+[B]Version 1.0.4[/B]
 website changed
-[B]Version 1.0.3
+[B]Version 1.0.3[/B]
 website changed
-[B]Version 1.0.2
+[B]Version 1.0.2[/B]
 website changed
-[B]Version 1.0.2
+[B]Version 1.0.1[/B]
 initial version
 
