@@ -92,13 +92,36 @@ class DeluxeMusic(object):
             match = re.search('player.src.*?src:."(?P<video>.*?)"', data)
             if(match != None):
 
+                # get play list link
                 play = match.group('video')
                 if(not USE_HTTPS):
                     play = play.replace('https','http')
 
-                if(DEBUG_PLUGIN):
-                    xbmc.log('- file - ' + play)
-                xbmc.Player().play(play)
+                # download playlist
+                data = self.getHTML(play)
+                lines = data.split('\n')
+
+                fname = play.split('/')[-1]
+                urlPath = play.replace(fname,'')
+
+                x = 0
+                play = ''
+
+                # search chunklist and select first chunklist (best quality)
+                for l in lines:
+                    if l.startswith('#EXT-X-STREAM-INF:BANDWIDTH='):
+                        if(play == ''):
+                            if(DEBUG_PLUGIN):
+                                xbmc.log('- found - ' + l)
+                            play = urlPath + lines [x+1]
+                    x = x + 1
+
+                if play <> '':
+                    if(DEBUG_PLUGIN):
+                        xbmc.log('- file - ' + play)
+                    xbmc.Player().play(play)
+                else:
+                    xbmc.executebuiltin('Notification(Deluxe Music,Nothing to play, 2000)')
             else:
                 xbmc.executebuiltin('Notification(Deluxe Music,Nothing to play, 2000)')
 
