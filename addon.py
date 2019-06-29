@@ -25,7 +25,6 @@ import urllib
 import urlparse
 
 import re
-import mechanize
 import requests
 
 from BeautifulSoup import BeautifulSoup
@@ -49,15 +48,11 @@ class DeluxeMusic(object):
 
     def getHTML(self, link):
 
-        # init browser
-        br = mechanize.Browser()
-        br.set_handle_robots(False)
-        #br.set_handle_gzip(True)
+        response = requests.get(link)
+        if (response.status_code == 200):
+            return response.text
 
-        response = br.open(link)
-        result = response.read()
-
-        return result
+        return ''
 
     def showSelector(self):
 
