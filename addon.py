@@ -81,44 +81,55 @@ class DeluxeMusic(object):
 
         if(url == 'live'):
 
-            link = 'https://event.mivitec.net/dist/js/ads_https2.js'
-            data = self.getHTML(link)
+            url = 'https://www.deluxemusic.tv/tv.html'
 
-            match = re.search('player.src.*?src:."(?P<video>.*?)"', data)
-            if(match != None):
+            r = requests.get(url)
+            if r.status_code == requests.codes.ok:
+                result = r.text
 
-                # get play list link
-                play = match.group('video')
-                if(not USE_HTTPS):
-                    play = play.replace('https','http')
+                # find webcast
+                s1 = 'webcastId:(.*?),'
+                match = re.search(s1,result, re.DOTALL)
+                if match is not None:
+                    webID = match.group(1)
 
-                # download playlist
-                data = self.getHTML(play)
-                lines = data.split('\n')
+                    # find applicationId
+                    s1 = 'applicationId:(.*?),'
+                    match = re.search(s1,result, re.DOTALL)
+                    if match is not None:
+                        appID = match.group(1)
 
-                fname = play.split('/')[-1]
-                urlPath = play.replace(fname,'')
+                        header = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:73.0) Gecko/20100101 Firefox/73.0'#,
+                                    #'Referer': 'https://player.cdn.tv1.eu/statics/player/6.5.3/standalone/production/index.html?ext=true&l=e&id=player'
+                                }
+                        url = 'https://player.cdn.tv1.eu/pservices/player/_x_s-' + appID + '_w-' + webID + '/playlist?playout=hls&noflash=true&theov=2.64.0'
 
-                x = 0
-                play = ''
+                        r = requests.get(url, headers = header)
+                        if r.status_code == requests.codes.ok:
+                            result = r.text
+                            #print (r.text)
 
-                # search chunklist and select first chunklist (best quality)
-                for l in lines:
-                    if l.startswith('#EXT-X-STREAM-INF:BANDWIDTH='):
-                        if(play == ''):
-                            if(DEBUG_PLUGIN):
-                                xbmc.log('- found - ' + l)
-                            play = urlPath + lines [x+1]
-                    x = x + 1
+                            jObj = json.loads(r.text)
 
-                if play <> '':
-                    if(DEBUG_PLUGIN):
-                        xbmc.log('- file - ' + play)
-                    xbmc.Player().play(play)
-                else:
-                    xbmc.executebuiltin('Notification(Deluxe Music,Nothing to play, 2000)')
-            else:
-                xbmc.executebuiltin('Notification(Deluxe Music,Nothing to play, 2000)')
+                            #print jObj['additional']['pl']['entries'][0]['title']
+                            #print jObj['additional']['pl']['entries'][0]['video']['src']
+                            #print jObj['additional']['pl']['entries'][0]['images'][1]['src']
+
+                            playlist = jObj['additional']['pl']['entries'][0]['video']['src']
+
+                            # init playlist
+                            pl = xbmc.PlayList(1)
+                            pl.clear()
+
+                            playitem = xbmcgui.ListItem(path=playlist)
+                            playitem.setInfo('video', { 'plot': 'Live stream' })
+                            playitem.setProperty('inputstreamaddon', 'inputstream.adaptive')
+                            playitem.setProperty('inputstream.adaptive.manifest_type', 'hls')
+
+                            playitem.setContentLookup(False)
+
+                            pl.add(playlist,playitem)
+                            xbmc.Player().play(pl)
 
         elif (url == 'audio'):
 
@@ -175,9 +186,9 @@ class DeluxeMusic(object):
                     if(m != None):
                         thumb =  'https://www.deluxemusic.tv' + m.group(1)
 
-                    m = re.search('<header.*?<a.href=.*?>(.*?)\<', str(intro))
-                    if(m != None):
-                        title =  m.group(1)
+                    header = intro.find('h1' , {'class' : 'csc-firstHeader'})
+                    if header is not None:
+                        title = header.text
 
                 intro = one.find('div' , {'class' : 'egodeluxeelement'})
                 if intro is not None:
@@ -191,39 +202,56 @@ class DeluxeMusic(object):
 
         elif (url == 'week'):
 
-            # get video of the week
-            link = 'https://www.deluxemusic.tv/video-of-the-week.html'
-            data = self.getHTML(link)
+            url = 'https://www.deluxemusic.tv/video-of-the-week.html'
 
-            # <deluxe-playlist playlist_id="21">
-            m = re.search('<deluxe-playlist.playlist_id="(.*?)">', data)
-            if(m != None):
-                idNo = m.group(1)
+            r = requests.get(url)
+            if r.status_code == requests.codes.ok:
+                result = r.text
 
-                # api-endpoint
-                URL = "https://deluxetv-vimp.mivitec.net/playlist_tag/search_playlist_videos.php"
+                # find webcast
+                s1 = 'playlistId:(.*?),'
+                match = re.search(s1,result, re.DOTALL)
+                if match is not None:
+                    webID = match.group(1)
 
-                # defining a params dict for the parameters to be sent to the API
-                DATA = {'playlist_id' : idNo}
+                    # find applicationId
+                    s1 = 'applicationId:(.*?),'
+                    match = re.search(s1,result, re.DOTALL)
+                    if match is not None:
+                        appID = match.group(1)
 
-                HEADER =  {'Referer' : 'https://www.deluxemusic.tv/video-of-the-week.html',
-                           'Origin' : 'https://www.deluxemusic.tv'}
+                        header = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:73.0) Gecko/20100101 Firefox/73.0',
+                                  'Referer': 'https://player.cdn.tv1.eu/statics/player/6.5.3/standalone/production/index.html?ext=true&l=e&id=player'
+                                }
+                        url = 'https://player.cdn.tv1.eu/pservices/player/_x_s-' + appID + '/playlist?playout=hls&noflash=true&theov=2.64.0&pl=' + webID
 
-                # sending get request and saving the response as response object
-                r = requests.post(url = URL, data = DATA, headers = HEADER)
 
-                # extracting data in json format
-                data = r.json()
+                        r = requests.get(url, headers = header)
+                        if r.status_code == requests.codes.ok:
+                            result = r.text
+                            #print (r.text)
 
-                key = data[0]['mediakey']
-                title = data[0]['title']
-                name = data[0]['thumbnail_filename']
+                            jObj = json.loads(r.text)
 
-                thumb = 'https://deluxetv-vimp.mivitec.net/playlist_embed/thumbs/' + name
+                            #print jObj['additional']['pl']['entries'][0]['title']
+                            #print jObj['additional']['pl']['entries'][0]['video']['src']
+                            #print jObj['additional']['pl']['entries'][0]['images'][1]['src']
 
-                self.addMediaItem(title, PATH + '?subitem=%s' % key, thumb)
+                            playlist = jObj['additional']['pl']['entries'][0]['video']['src']
 
-            xbmcplugin.endOfDirectory(HANDLE)
+                            # init playlist
+                            pl = xbmc.PlayList(1)
+                            pl.clear()
+
+                            playitem = xbmcgui.ListItem(path=playlist)
+                            playitem.setInfo('video', { 'plot': 'Video of the week' })
+                            playitem.setProperty('inputstreamaddon', 'inputstream.adaptive')
+                            playitem.setProperty('inputstream.adaptive.manifest_type', 'hls')
+
+                            playitem.setContentLookup(False)
+
+                            pl.add(playlist,playitem)
+                            xbmc.Player().play(pl)
 
         else:
 
