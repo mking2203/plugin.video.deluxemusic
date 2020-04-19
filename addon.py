@@ -201,17 +201,6 @@ class DeluxeMusic(object):
             # play mediathek files
             self.playVideo(url)
 
-    def showSubtitem(self, url):
-
-        if(DEBUG_PLUGIN):
-            xbmc.log('- show subitem %s -' % url)
-
-        link = 'https://deluxetv-vimp.mivitec.net/getMedium/' + url + ".mp4"
-
-        if(DEBUG_PLUGIN):
-            xbmc.log('- file - ' + link)
-        xbmc.Player().play(link)
-
     def playVideo(self, url):
 
         header = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:73.0) Gecko/20100101 Firefox/73.0',
@@ -303,8 +292,6 @@ try:
 
         if PARAMS.has_key('categories'):
             deluxe.showCategory(PARAMS['categories'][0])
-        elif PARAMS.has_key('subitem'):
-            deluxe.showSubtitem(PARAMS['subitem'][0])
         else:
             deluxe.showSelector()
 except Exception, e:
