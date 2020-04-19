@@ -1,7 +1,9 @@
+﻿#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 #  Deluxe Music Addon
 #
-#      Copyright (C) 2017
-#      http://
+#      Copyright (C) 2017 Mark König
 #
 #  This Program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -17,7 +19,6 @@
 #  along with this Program; see the file LICENSE.txt.  If not, write to
 #  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 #  http://www.gnu.org/copyleft/gpl.html
-#
 
 import os
 import sys
@@ -28,8 +29,6 @@ import re
 import requests
 
 from BeautifulSoup import BeautifulSoup
-
-import buggalo
 
 import json
 
@@ -99,37 +98,8 @@ class DeluxeMusic(object):
                     if match is not None:
                         appID = match.group(1)
 
-                        header = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:73.0) Gecko/20100101 Firefox/73.0'#,
-                                    #'Referer': 'https://player.cdn.tv1.eu/statics/player/6.5.3/standalone/production/index.html?ext=true&l=e&id=player'
-                                }
                         url = 'https://player.cdn.tv1.eu/pservices/player/_x_s-' + appID + '_w-' + webID + '/playlist?playout=hls&noflash=true&theov=2.64.0'
-
-                        r = requests.get(url, headers = header)
-                        if r.status_code == requests.codes.ok:
-                            result = r.text
-                            #print (r.text)
-
-                            jObj = json.loads(r.text)
-
-                            #print jObj['additional']['pl']['entries'][0]['title']
-                            #print jObj['additional']['pl']['entries'][0]['video']['src']
-                            #print jObj['additional']['pl']['entries'][0]['images'][1]['src']
-
-                            playlist = jObj['additional']['pl']['entries'][0]['video']['src']
-
-                            # init playlist
-                            pl = xbmc.PlayList(1)
-                            pl.clear()
-
-                            playitem = xbmcgui.ListItem(path=playlist)
-                            playitem.setInfo('video', { 'plot': 'Live stream' })
-                            playitem.setProperty('inputstreamaddon', 'inputstream.adaptive')
-                            playitem.setProperty('inputstream.adaptive.manifest_type', 'hls')
-
-                            playitem.setContentLookup(False)
-
-                            pl.add(playlist,playitem)
-                            xbmc.Player().play(pl)
+                        self.playVideo(url)
 
         elif (url == 'audio'):
 
@@ -138,32 +108,25 @@ class DeluxeMusic(object):
             data = self.getHTML(link)
             soup = BeautifulSoup(data)
 
-            table = soup.find('div' , {'class' : 'audioplayer'} )
-            if table is not None:
-                tables = table.findAll('div')
+            tables = soup.findAll('span' , {'class' : 'csc-uploads-fileName'})
 
-                image = ''
-                link = ''
-                title = ''
+            for one in tables:
+                href = one.find('a')
+                if(href is not None):
 
-                for item in tables:
+                    txt = href.text
+                    name = os.path.splitext(txt)[0]
+                    ext = os.path.splitext(txt)[1]
 
-                    if(item["class"] == 'image'):
-                        img = item.find('img')
-                        image = 'https://www.deluxemusic.tv' + img['src']
-                    if(item["class"] == 'info'):
-                        title = item.parent['class'].replace('_',' ')
-                    if(item["class"] == 'link'):
-                        lnk = item.find('a')
-                        link = lnk['href']
-                        link = link.replace('.html','')
-                        link = link.replace('/radio/','')
+                    if('.m3u' in ext):
+                        link = 'https://www.deluxemusic.tv' + href.get('href')
+                        self.addMediaItem(name, link,'')
 
-                        self.addMediaItem(title, PATH + '?playAudio=%s' % link, image)
-
-                xbmcplugin.endOfDirectory(HANDLE)
+            xbmcplugin.endOfDirectory(HANDLE)
 
         elif (url == 'media'):
+
+            # show mediathek content
 
             thumb =''
             title =''
@@ -186,33 +149,45 @@ class DeluxeMusic(object):
                     if(m != None):
                         thumb =  'https://www.deluxemusic.tv' + m.group(1)
 
-                    header = intro.find('h1' , {'class' : 'csc-firstHeader'})
-                    if header is not None:
-                        title = header.text
+                        header = intro.find('h1' , {'class' : 'csc-firstHeader'})
+                        if header is not None:
+                            title = header.text
 
-                intro = one.find('div' , {'class' : 'egodeluxeelement'})
-                if intro is not None:
+                element = one.find('div' , {'class' : 'egodeluxeelement'})
+                if element is not None:
 
-                    m = re.search('<deluxe-playlist.playlist_id=\"(.*?)\"', str(intro))
-                    if(m != None):
-                        idNo = m.group(1)
-                        self.addPicture2Item(title, PATH + '?categories=%s' % idNo, '', thumb)
+                    script = element.find('script')
+                    if(script is not None):
+
+                        s1 = 'playlistId:(.*?),'
+                        match = re.search(s1, script.string, re.DOTALL)
+                        if match is not None:
+                            playID = match.group(1)
+
+                            s1 = 'applicationId:(.*?),'
+                            match = re.search(s1, script.string, re.DOTALL)
+                            if match is not None:
+                                appID = match.group(1)
+
+                                url = urllib.quote_plus('https://player.cdn.tv1.eu/pservices/player/_x_s-' + appID + '/playlist?playout=hls&noflash=true&theov=2.64.0&pl=' + playID)
+                                self.addPictureItem(title, PATH + '?categories=%s' % url, thumb)
 
             xbmcplugin.endOfDirectory(HANDLE)
 
         elif (url == 'week'):
 
+            #  play video of the week
             url = 'https://www.deluxemusic.tv/video-of-the-week.html'
 
             r = requests.get(url)
             if r.status_code == requests.codes.ok:
                 result = r.text
 
-                # find webcast
+                # find playlistID
                 s1 = 'playlistId:(.*?),'
                 match = re.search(s1,result, re.DOTALL)
                 if match is not None:
-                    webID = match.group(1)
+                    playlistID = match.group(1)
 
                     # find applicationId
                     s1 = 'applicationId:(.*?),'
@@ -220,70 +195,11 @@ class DeluxeMusic(object):
                     if match is not None:
                         appID = match.group(1)
 
-                        header = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:73.0) Gecko/20100101 Firefox/73.0',
-                                  'Referer': 'https://player.cdn.tv1.eu/statics/player/6.5.3/standalone/production/index.html?ext=true&l=e&id=player'
-                                }
-                        url = 'https://player.cdn.tv1.eu/pservices/player/_x_s-' + appID + '/playlist?playout=hls&noflash=true&theov=2.64.0&pl=' + webID
-
-
-                        r = requests.get(url, headers = header)
-                        if r.status_code == requests.codes.ok:
-                            result = r.text
-                            #print (r.text)
-
-                            jObj = json.loads(r.text)
-
-                            #print jObj['additional']['pl']['entries'][0]['title']
-                            #print jObj['additional']['pl']['entries'][0]['video']['src']
-                            #print jObj['additional']['pl']['entries'][0]['images'][1]['src']
-
-                            playlist = jObj['additional']['pl']['entries'][0]['video']['src']
-
-                            # init playlist
-                            pl = xbmc.PlayList(1)
-                            pl.clear()
-
-                            playitem = xbmcgui.ListItem(path=playlist)
-                            playitem.setInfo('video', { 'plot': 'Video of the week' })
-                            playitem.setProperty('inputstreamaddon', 'inputstream.adaptive')
-                            playitem.setProperty('inputstream.adaptive.manifest_type', 'hls')
-
-                            playitem.setContentLookup(False)
-
-                            pl.add(playlist,playitem)
-                            xbmc.Player().play(pl)
-
+                        url = 'https://player.cdn.tv1.eu/pservices/player/_x_s-' + appID + '/playlist?playout=hls&noflash=true&theov=2.64.0&pl=' + playlistID
+                        self.playVideo(url)
         else:
-
-            load = 'https://deluxetv-vimp.mivitec.net/playlist_embed/search_playlist_videos.php'
-
-            data = {'playlist_id' : url}
-            data = urllib.urlencode(data)
-
-            header = { 'Host' : 'deluxetv-vimp.mivitec.net' ,
-               'Accept' : '*/*',
-               'User-Agent' : 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:54.0) Gecko/20100101 Firefox/54.0',
-               'Accept-Language' : 'de,en-US;q=0.7,en;q=0.3',
-               'Accept-Encoding' : 'gzip, deflate',
-               'Content-Type' : 'application/x-www-form-urlencoded; charset=UTF-8',
-               'Referer' : 'https://deluxetv-vimp.mivitec.net/playlist_embed/playlist.php?playlist_id=' + url,
-               'X-Requested-With' : 'XMLHttpRequest'
-            }
-
-            r = requests.post(url = load, data = data, headers = header)
-            js = json.loads(r.text)
-
-            for x in xrange(0,len(js)):
-
-                dur = js[x]['duration']
-                key = js[x]['mediakey']
-                desc = js[x]['description']
-                title = js[x]['title']
-                thumb = 'https://deluxetv-vimp.mivitec.net/playlist_embed/thumbs/' + js[x]['thumbnail_filename']
-
-                self.addMediaItem(title, PATH + '?subitem=%s' % key, thumb)
-
-            xbmcplugin.endOfDirectory(HANDLE)
+            # play mediathek files
+            self.playVideo(url)
 
     def showSubtitem(self, url):
 
@@ -296,24 +212,37 @@ class DeluxeMusic(object):
             xbmc.log('- file - ' + link)
         xbmc.Player().play(link)
 
-    def playAudio(self, audio):
+    def playVideo(self, url):
 
-        if(DEBUG_PLUGIN):
-            xbmc.log('- show playAudio %s -' % audio)
+        header = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:73.0) Gecko/20100101 Firefox/73.0',
+                                  'Referer': 'https://player.cdn.tv1.eu/statics/player/6.5.3/standalone/production/index.html?ext=true&l=e&id=player'
+                    }
 
-        link = 'https://www.deluxemusic.tv/radio/' + audio + ".html"
+        r = requests.get(url, headers = header)
+        if r.status_code == requests.codes.ok:
+            result = r.text
 
-        data = self.getHTML(link)
-        soup = BeautifulSoup(data)
+            jObj = json.loads(r.text)
 
-        table = soup.find('audio')
-        if table is not None:
-            link = table['src']
+            title = jObj['additional']['pl']['entries'][0]['title']
+            #print jObj['additional']['pl']['entries'][0]['video']['src']
+            #print jObj['additional']['pl']['entries'][0]['images'][1]['src']
 
-            if(DEBUG_PLUGIN):
-                xbmc.log('- file - ' + link)
-            xbmc.Player().play(link)
+            playlist = jObj['additional']['pl']['entries'][0]['video']['src']
 
+            # init playlist
+            pl = xbmc.PlayList(1)
+            pl.clear()
+
+            playitem = xbmcgui.ListItem(path=playlist)
+            playitem.setInfo('video', { 'plot': title })
+            playitem.setProperty('inputstreamaddon', 'inputstream.adaptive')
+            playitem.setProperty('inputstream.adaptive.manifest_type', 'hls')
+
+            playitem.setContentLookup(False)
+
+            pl.add(playlist,playitem)
+            xbmc.Player().play(pl)
 
 #### some functions ####
 
@@ -345,6 +274,9 @@ class DeluxeMusic(object):
                           'icon': thumb,
                           'fanart': BACKG})
 
+        list_item.setInfo('music',{'title', title})
+        list_item.setProperty('IsPlayable','true')
+
         xbmcplugin.addDirectoryItem(HANDLE, url, list_item, False)
 
 #### main entry point ####
@@ -362,12 +294,9 @@ if __name__ == '__main__':
     BACKG = os.path.join(ADDON.getAddonInfo('path'), 'fanart.jpg')
 
     DEBUG_PLUGIN = False;
-    USE_HTTPS = False;
 
     if(str(xbmcplugin.getSetting(HANDLE, 'debug')) == 'true'):
         DEBUG_PLUGIN = True
-    if(str(xbmcplugin.getSetting(HANDLE, 'https')) == 'true'):
-        USE_HTTPS = True
 
 try:
         deluxe = DeluxeMusic()
@@ -376,9 +305,7 @@ try:
             deluxe.showCategory(PARAMS['categories'][0])
         elif PARAMS.has_key('subitem'):
             deluxe.showSubtitem(PARAMS['subitem'][0])
-        elif PARAMS.has_key('playAudio'):
-            deluxe.playAudio(PARAMS['playAudio'][0])
         else:
             deluxe.showSelector()
-except Exception:
-    buggalo.onExceptionRaised()
+except Exception, e:
+    xbmc.log('DELUXE MUSIC Exception: ' + str(e))

@@ -1,3 +1,7 @@
+[B]Version 1.0.10 2020-04-19[/B]
+code cleanup
+[B]Version 1.0.9 2020-04-18[/B]
+fix the mediathek (also hls)
 [B]Version 1.0.8 2020-03-xx[/B]
 website change to hls streaming
 [B]Version 1.0.7 2019-06-29[/B]

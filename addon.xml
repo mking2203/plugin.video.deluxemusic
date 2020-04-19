@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<addon id="plugin.video.deluxemusic" version="1.0.8" name="Deluxe Music" provider-name="Mark Koenig">
+<addon id="plugin.video.deluxemusic" version="1.0.10" name="Deluxe Music" provider-name="Mark König">
     <requires>
         <import addon="xbmc.python" version="2.7.0"/>
         <import addon="xbmc.addon" version="13.0.0" />
-        <import addon="script.module.buggalo" version="1.1.2"/>
         <import addon="script.module.beautifulsoup" version="3.0.8"/>
         <import addon="script.module.requests" version="2.9.1"/>
     </requires>
@@ -13,12 +12,12 @@
     <extension point="xbmc.addon.metadata">
         <summary lang="de">Deluxemusic - Music Television</summary>
         <summary lang="en">Deluxemusic - Music Television</summary>
-        <description lang="de">Echtes Musikfernsehen. Kostenloser Musik TV-Sender und Radio-Livestream rund um die Uhr mit den Perlen aus sechs Jahrzehnten Musikgeschichte.</description>
-        <description lang="en">Deluxemusic - Music Television</description>
+        <description lang="de">Echtes Musikfernsehen. Kostenloser Musik TV-Sender und Radio-Livestream rund um die Uhr mit den Perlen aus sechs Jahrzehnten Musikgeschichte. Webseite https://www.deluxemusic.tv</description>
+        <description lang="en">Deluxemusic - Music Television. Website https://www.deluxemusic.tv</description>
         <license>GPL 2.0</license>
         <platform>all</platform>
         <language>en,de</language>
-        <email>mking2203@yahoo.com</email>
+        <email>mark.koenig@kleiner-schelm.de</email>
         <website>https://www.kodinerds.net/index.php/Thread/57551-Release-Deluxe-Music-TV</website>
         <source>https://github.com/mking2203/plugin.video.deluxemusic</source>
         <assets>
