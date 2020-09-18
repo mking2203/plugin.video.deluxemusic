@@ -24,6 +24,7 @@ import os
 import sys
 import urllib
 import urlparse
+import time
 
 import re
 import requests
@@ -102,29 +103,53 @@ class DeluxeMusic(object):
 
                         url = 'https://player.cdn.tv1.eu/pservices/player/_x_s-' + appID + '_w-' + webID + '/playlist?playout=hls&noflash=true&theov=2.64.0'
                         xbmc.log('- url%s' % url)
-                        
+
                         self.playVideo(url)
 
         elif (url == 'audio'):
 
-            link = 'https://www.deluxemusic.tv/radio/music.html'
+            # why they have wired stations names?
+            channels = [("Lounge", "deluxe-lounge"),
+                        ("Music", "deluxe-music"),
+                        ("80s", "deluxe-80s"),
+                        ("Easy", "deluxe-easy"),
+                        ("Disco", "discodeluxe"),
+                        ("Top 40", "deluxe-top40"),
+                        ("Jukebox", "jukeboxradio"),
+                        ("Dance", "deluxe-famous"),
+                        ("New", "deluxe-arrivals"),
+                        ("RCK", "rckradio"),
+                        ("KAVKA", "kanalkavka"),
+                        ("Chefsessel", "deluxe-chefsessel")]
 
-            data = self.getHTML(link)
-            soup = BeautifulSoup(data)
+            link = 'https://deluxemusic.de/radio/'
 
-            tables = soup.findAll('span' , {'class' : 'csc-uploads-fileName'})
+            r = requests.get(link)
+            if r.status_code == requests.codes.ok:
 
-            for one in tables:
-                href = one.find('a')
-                if(href is not None):
+                xbmc.log('- load audio data')
+                result = r.text
 
-                    txt = href.text
-                    name = os.path.splitext(txt)[0]
-                    ext = os.path.splitext(txt)[1]
+                regex = '<div.class="col-md-3">.*?<a.href="(.*?)".*?alt="(.*?)".*?<img.src="(https:.*?)".*?<\/noscript>'
+                match = re.findall(regex,result,re.DOTALL)
 
-                    if('.m3u' in ext):
-                        link = 'https://www.deluxemusic.tv' + href.get('href')
-                        self.addMediaItem(name, link,'')
+                for m in match:
+
+                    name = m[1]
+                    xbmc.log('- station ' + name)
+
+                    thumb = m[2]
+
+                    link = ''
+
+                    for a,b in channels:
+                        if(a in name):
+                            link = b
+
+                    if(len(link) > 0):
+                        timestamp = int(time.time())
+                        link = "https://deluxe.hoerradar.de/" + link + "-aac-mq?amsparams=playerid:website;skey:" + str(timestamp)
+                        self.addMediaItem(name, link, thumb)
 
             xbmcplugin.endOfDirectory(HANDLE)
 

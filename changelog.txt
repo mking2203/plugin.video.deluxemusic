@@ -1,3 +1,6 @@
+[B]Version 1.0.12 2020-09-18[/B]
+fix audio channels
+mediathek still not working (website)
 [B]Version 1.0.11 2020-09-15[/B]
 website change, quick fix for live channel
 [B]Version 1.0.10 2020-04-19[/B]
