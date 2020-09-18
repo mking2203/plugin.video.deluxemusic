@@ -80,7 +80,7 @@ class DeluxeMusic(object):
 
         if(url == 'live'):
 
-            url = 'https://www.deluxemusic.tv/tv.html'
+            url = 'https://deluxemusic.tv'
 
             r = requests.get(url)
             if r.status_code == requests.codes.ok:
@@ -90,15 +90,19 @@ class DeluxeMusic(object):
                 s1 = 'webcastId:(.*?),'
                 match = re.search(s1,result, re.DOTALL)
                 if match is not None:
-                    webID = match.group(1)
+                    webID = match.group(1).strip()
+                    xbmc.log('- web ID %s' % webID)
 
                     # find applicationId
                     s1 = 'applicationId:(.*?),'
                     match = re.search(s1,result, re.DOTALL)
                     if match is not None:
-                        appID = match.group(1)
+                        appID = match.group(1).strip()
+                        xbmc.log('- app ID %s' % appID)
 
                         url = 'https://player.cdn.tv1.eu/pservices/player/_x_s-' + appID + '_w-' + webID + '/playlist?playout=hls&noflash=true&theov=2.64.0'
+                        xbmc.log('- url%s' % url)
+                        
                         self.playVideo(url)
 
         elif (url == 'audio'):
@@ -177,7 +181,7 @@ class DeluxeMusic(object):
         elif (url == 'week'):
 
             #  play video of the week
-            url = 'https://www.deluxemusic.tv/video-of-the-week.html'
+            url = 'https://deluxemusic.de/mediathek/?v=unser-musikvideo-der-woche'
 
             r = requests.get(url)
             if r.status_code == requests.codes.ok:
@@ -187,19 +191,32 @@ class DeluxeMusic(object):
                 s1 = 'playlistId:(.*?),'
                 match = re.search(s1,result, re.DOTALL)
                 if match is not None:
-                    playlistID = match.group(1)
+                    playlistID = match.group(1).strip()
+                    xbmc.log('- playlist ID %s' % playlistID)
 
                     # find applicationId
                     s1 = 'applicationId:(.*?),'
                     match = re.search(s1,result, re.DOTALL)
                     if match is not None:
-                        appID = match.group(1)
+                        appID = match.group(1).strip()
+                        xbmc.log('- app ID %s' % appID)
 
                         url = 'https://player.cdn.tv1.eu/pservices/player/_x_s-' + appID + '/playlist?playout=hls&noflash=true&theov=2.64.0&pl=' + playlistID
                         self.playVideo(url)
         else:
             # play mediathek files
             self.playVideo(url)
+
+    def showSubtitem(self, url):
+
+        if(DEBUG_PLUGIN):
+            xbmc.log('- show subitem %s -' % url)
+
+        link = 'https://deluxetv-vimp.mivitec.net/getMedium/' + url + ".mp4"
+
+        if(DEBUG_PLUGIN):
+            xbmc.log('- file - ' + link)
+        xbmc.Player().play(link)
 
     def playVideo(self, url):
 
@@ -292,6 +309,8 @@ try:
 
         if PARAMS.has_key('categories'):
             deluxe.showCategory(PARAMS['categories'][0])
+        elif PARAMS.has_key('subitem'):
+            deluxe.showSubtitem(PARAMS['subitem'][0])
         else:
             deluxe.showSelector()
 except Exception, e:
