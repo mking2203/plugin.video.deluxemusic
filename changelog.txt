@@ -1,3 +1,6 @@
+[B]Version 1.0.13 2020-09-27[/B]
+fix for the mediathek
+Video of the week is now in the mediathek
 [B]Version 1.0.12 2020-09-18[/B]
 fix audio channels
 mediathek still not working (website)

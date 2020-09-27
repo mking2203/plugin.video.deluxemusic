@@ -68,9 +68,6 @@ class DeluxeMusic(object):
         # add mediathek
         pic = os.path.join(ADDON.getAddonInfo('path'), 'icon_mediathek.png')
         self.addPicture2Item('Deluxe Music Mediathek', PATH + '?categories=%s' % 'media', pic, BACKG)
-        # add VideoOfWeek
-        pic = os.path.join(ADDON.getAddonInfo('path'), 'icon_week.png')
-        self.addPicture2Item('Deluxe Music Video of the Week', PATH + '?categories=%s' % 'week', pic, BACKG)
 
         xbmcplugin.endOfDirectory(HANDLE)
 
@@ -160,74 +157,40 @@ class DeluxeMusic(object):
             thumb =''
             title =''
             idNo=''
+            postNo = ''
 
             # get mediathek channels
-            link = 'https://www.deluxemusic.tv/mediathek.html'
+            link = 'https://deluxemusic.de/mediathek/'
 
-            data = self.getHTML(link)
-            soup = BeautifulSoup(data)
+            r = requests.get(link)
+            if r.status_code == requests.codes.ok:
 
-            tables = soup.findAll('div' , {'class' : 'csc-default'})
+                xbmc.log('- load mediathek data')
+                result = r.text
 
-            for one in tables:
+                regex = 'data-id="(.*?)".*?data-post-id="(.*?)".*?data-lazy-src="(.*?)"(.*?)<\/a>'
+                match = re.findall(regex, result, re.DOTALL)
 
-                intro = one.find('div' , {'class' : 'egodeluxeelement egodeluxeelement-intro'})
-                if intro is not None:
+                for m in match:
 
-                    m = re.search('<img.src=\"(.*?)\"', str(intro))
-                    if(m != None):
-                        thumb =  'https://www.deluxemusic.tv' + m.group(1)
+                    idNo = m[0]
+                    postNo = m[1]
+                    thumb = m[2]
 
-                        header = intro.find('h1' , {'class' : 'csc-firstHeader'})
-                        if header is not None:
-                            title = header.text
+                    data = m[3]
 
-                element = one.find('div' , {'class' : 'egodeluxeelement'})
-                if element is not None:
+                    # try to read title through logo
+                    regex = 'alt="(.*?)"'
+                    match = re.search(regex, result, re.DOTALL)
 
-                    script = element.find('script')
-                    if(script is not None):
-
-                        s1 = 'playlistId:(.*?),'
-                        match = re.search(s1, script.string, re.DOTALL)
-                        if match is not None:
-                            playID = match.group(1)
-
-                            s1 = 'applicationId:(.*?),'
-                            match = re.search(s1, script.string, re.DOTALL)
-                            if match is not None:
-                                appID = match.group(1)
-
-                                url = urllib.quote_plus('https://player.cdn.tv1.eu/pservices/player/_x_s-' + appID + '/playlist?playout=hls&noflash=true&theov=2.64.0&pl=' + playID)
-                                self.addPictureItem(title, PATH + '?categories=%s' % url, thumb)
+                    regex = '<div.class="logo">.*?alt="(.*?)"'
+                    match = re.search(regex, data, re.DOTALL)
+                    if(match is not None):
+                        title = match.group(1)
+                        self.addPictureItem(title, PATH + '?playmedia=%s&post=%s' % (idNo,postNo), thumb)
 
             xbmcplugin.endOfDirectory(HANDLE)
 
-        elif (url == 'week'):
-
-            #  play video of the week
-            url = 'https://deluxemusic.de/mediathek/?v=unser-musikvideo-der-woche'
-
-            r = requests.get(url)
-            if r.status_code == requests.codes.ok:
-                result = r.text
-
-                # find playlistID
-                s1 = 'playlistId:(.*?),'
-                match = re.search(s1,result, re.DOTALL)
-                if match is not None:
-                    playlistID = match.group(1).strip()
-                    xbmc.log('- playlist ID %s' % playlistID)
-
-                    # find applicationId
-                    s1 = 'applicationId:(.*?),'
-                    match = re.search(s1,result, re.DOTALL)
-                    if match is not None:
-                        appID = match.group(1).strip()
-                        xbmc.log('- app ID %s' % appID)
-
-                        url = 'https://player.cdn.tv1.eu/pservices/player/_x_s-' + appID + '/playlist?playout=hls&noflash=true&theov=2.64.0&pl=' + playlistID
-                        self.playVideo(url)
         else:
             # play mediathek files
             self.playVideo(url)
@@ -274,6 +237,38 @@ class DeluxeMusic(object):
 
             pl.add(playlist,playitem)
             xbmc.Player().play(pl)
+
+    def playMedia(self, id, post):
+
+        link = 'https://deluxemusic.de/wp-admin/admin-ajax.php?action=get_teaser_video&teaser_id=%s&post_id=%s'  % (id,post)
+        r = requests.get(link)
+        if r.status_code == requests.codes.ok:
+
+            xbmc.log('- teaser')
+            result = r.text
+
+            # find playlistId:
+            s1 = 'playlistId:(.*?),'
+            match = re.search(s1,result, re.DOTALL)
+            if match is not None:
+                playlistId = match.group(1).strip()
+                xbmc.log('- playlistId ID %s' % playlistId)
+
+                # find applicationId
+                s1 = 'applicationId:(.*?),'
+                match = re.search(s1,result, re.DOTALL)
+                if match is not None:
+                    appID = match.group(1).strip()
+                    xbmc.log('- app ID %s' % appID)
+
+                    # https://player.cdn.tv1.eu/pservices/player/_x_s-2749759488/playlist?playout=hls&noflash=true&theov=2.64.0&pl=3159818244
+                    url = 'https://player.cdn.tv1.eu/pservices/player/_x_s-' + appID + '/' + playlistId + '/playlist?playout=hls&noflash=true&theov=2.64.0&pl=' + playlistId
+                    xbmc.log('- url%s' % url)
+
+                    self.playVideo(url)
+
+
+
 
 #### some functions ####
 
@@ -329,14 +324,16 @@ if __name__ == '__main__':
     if(str(xbmcplugin.getSetting(HANDLE, 'debug')) == 'true'):
         DEBUG_PLUGIN = True
 
-try:
-        deluxe = DeluxeMusic()
+#try:
+    deluxe = DeluxeMusic()
 
-        if PARAMS.has_key('categories'):
-            deluxe.showCategory(PARAMS['categories'][0])
-        elif PARAMS.has_key('subitem'):
-            deluxe.showSubtitem(PARAMS['subitem'][0])
-        else:
-            deluxe.showSelector()
-except Exception, e:
-    xbmc.log('DELUXE MUSIC Exception: ' + str(e))
+    if PARAMS.has_key('categories'):
+        deluxe.showCategory(PARAMS['categories'][0])
+    elif PARAMS.has_key('subitem'):
+        deluxe.showSubtitem(PARAMS['subitem'][0])
+    elif PARAMS.has_key('playmedia'):
+        deluxe.playMedia(PARAMS['playmedia'][0], PARAMS['post'][0])
+    else:
+        deluxe.showSelector()
+#except Exception as e:
+#   xbmc.log('DELUXE MUSIC Exception: ' + str(e))
