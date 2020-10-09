@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<strings>
-  <string id="30000">Allgemein</string>
-  
-  <string id="30010">Debug</string>
-  <string id="30011">Benutze HTTPS für Live Stream</string>
-</strings>

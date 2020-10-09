@@ -3,7 +3,7 @@
 
 #  Deluxe Music Addon
 #
-#      Copyright (C) 2017 Mark König
+#      Copyright (C) 2020 Mark König
 #
 #  This Program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -23,13 +23,13 @@
 import os
 import sys
 import urllib
-import urlparse
+import urllib.parse as urlparse
 import time
 
 import re
 import requests
 
-from BeautifulSoup import BeautifulSoup
+from bs4 import BeautifulSoup
 
 import json
 
@@ -37,6 +37,7 @@ import xbmc
 import xbmcgui
 import xbmcaddon
 import xbmcplugin
+import xbmcvfs
 
 CommonRootView = 50
 FullWidthList = 51
@@ -278,7 +279,7 @@ class DeluxeMusic(object):
 
     def addPictureItem(self, title, url, thumb):
 
-        list_item = xbmcgui.ListItem(label=title, thumbnailImage=thumb)
+        list_item = xbmcgui.ListItem(label=title)
         list_item.setArt({'thumb': thumb,
                           'icon': thumb})
 
@@ -286,7 +287,7 @@ class DeluxeMusic(object):
 
     def addPicture2Item(self, title, url, thumb, fanart):
 
-        list_item = xbmcgui.ListItem(label=title, thumbnailImage=thumb)
+        list_item = xbmcgui.ListItem(label=title)
         list_item.setArt({'thumb': thumb,
                           'icon': thumb,
                           'fanart': fanart})
@@ -295,7 +296,7 @@ class DeluxeMusic(object):
 
     def addMediaItem(self, title, url, thumb):
 
-        list_item = xbmcgui.ListItem(label=title, thumbnailImage=thumb)
+        list_item = xbmcgui.ListItem(label=title)
         list_item.setArt({'thumb': thumb,
                           'icon': thumb,
                           'fanart': BACKG})
@@ -327,11 +328,11 @@ if __name__ == '__main__':
 #try:
     deluxe = DeluxeMusic()
 
-    if PARAMS.has_key('categories'):
+    if ('categories' in PARAMS):
         deluxe.showCategory(PARAMS['categories'][0])
-    elif PARAMS.has_key('subitem'):
+    elif ('subitem' in PARAMS):
         deluxe.showSubtitem(PARAMS['subitem'][0])
-    elif PARAMS.has_key('playmedia'):
+    elif ('playmedia' in PARAMS):
         deluxe.playMedia(PARAMS['playmedia'][0], PARAMS['post'][0])
     else:
         deluxe.showSelector()

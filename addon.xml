@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<addon id="plugin.video.deluxemusic" version="1.0.13" name="Deluxe Music" provider-name="Mark König">
+<addon id="plugin.video.deluxemusic" version="3.0.1" name="Deluxe Music" provider-name="Mark König">
     <requires>
-        <import addon="xbmc.python" version="2.7.0"/>
+        <import addon="xbmc.python" version="3.0.0"/>
         <import addon="xbmc.addon" version="13.0.0" />
-        <import addon="script.module.beautifulsoup" version="3.0.8"/>
+        <import addon="script.module.beautifulsoup4" version="4.3.1"/> 
         <import addon="script.module.requests" version="2.9.1"/>
     </requires>
     <extension point="xbmc.python.pluginsource" library="addon.py">
