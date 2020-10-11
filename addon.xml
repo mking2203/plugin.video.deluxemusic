@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon id="plugin.video.deluxemusic" version="1.0.14" name="Deluxe Music" provider-name="Mark König">
     <requires>
-        <import addon="xbmc.python" version="2.7.0"/>
+        <import addon="xbmc.python" version="2.14.0"/>
         <import addon="xbmc.addon" version="13.0.0" />
         <import addon="script.module.beautifulsoup" version="3.0.8"/>
         <import addon="script.module.requests" version="2.9.1"/>
@@ -31,7 +31,7 @@
         </assets>
 		<news>
 [B]Version 1.0.14 - 10.10.2020[/B]
-- small adjustments[CR]		
+- small adjustments[CR]
 [B]Version 1.0.13 2020-09-27[/B]
 fix for the mediathek
 Video of the week is now in the mediathek[CR]
