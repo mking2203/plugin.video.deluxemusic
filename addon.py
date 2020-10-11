@@ -267,9 +267,6 @@ class DeluxeMusic(object):
 
                     self.playVideo(url)
 
-
-
-
 #### some functions ####
 
     def addFolderItem(self, title, url):
@@ -278,7 +275,7 @@ class DeluxeMusic(object):
 
     def addPictureItem(self, title, url, thumb):
 
-        list_item = xbmcgui.ListItem(label=title, thumbnailImage=thumb)
+        list_item = xbmcgui.ListItem(label=title)
         list_item.setArt({'thumb': thumb,
                           'icon': thumb})
 
@@ -286,7 +283,7 @@ class DeluxeMusic(object):
 
     def addPicture2Item(self, title, url, thumb, fanart):
 
-        list_item = xbmcgui.ListItem(label=title, thumbnailImage=thumb)
+        list_item = xbmcgui.ListItem(label=title)
         list_item.setArt({'thumb': thumb,
                           'icon': thumb,
                           'fanart': fanart})
@@ -295,7 +292,7 @@ class DeluxeMusic(object):
 
     def addMediaItem(self, title, url, thumb):
 
-        list_item = xbmcgui.ListItem(label=title, thumbnailImage=thumb)
+        list_item = xbmcgui.ListItem(label=title)
         list_item.setArt({'thumb': thumb,
                           'icon': thumb,
                           'fanart': BACKG})
