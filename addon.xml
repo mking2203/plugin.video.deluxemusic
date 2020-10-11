@@ -29,5 +29,8 @@
             <screenshot>resources/screenshot003.jpg</screenshot>
             <screenshot>resources/screenshot004.jpg</screenshot>
         </assets>
+        <news>
+[B]3.0.1[/B] - 10.10.2020[CR]- Migrate to Matrix[CR]
+        </news>
     </extension>
 </addon>
