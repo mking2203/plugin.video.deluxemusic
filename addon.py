@@ -92,17 +92,12 @@ class DeluxeMusic(object):
                     webID = match.group(1).strip()
                     xbmc.log('- web ID %s' % webID)
 
-                    # find applicationId
-                    s1 = 'applicationId:(.*?),'
-                    match = re.search(s1,result, re.DOTALL)
-                    if match is not None:
-                        appID = match.group(1).strip()
-                        xbmc.log('- app ID %s' % appID)
+                    appID = '2749759488'
 
-                        url = 'https://player.cdn.tv1.eu/pservices/player/_x_s-' + appID + '_w-' + webID + '/playlist?playout=hls&noflash=true&theov=2.64.0'
-                        xbmc.log('- url%s' % url)
+                    url = 'https://player.cdn.tv1.eu/pservices/player/_x_s-' + appID + '_w-' + webID + '/playlist?playout=hls&noflash=true&theov=2.64.0'
+                    xbmc.log('- url%s' % url)
 
-                        self.playVideo(url)
+                    self.playVideo(url)
 
         elif (url == 'audio'):
 
@@ -249,24 +244,23 @@ class DeluxeMusic(object):
             result = r.text
 
             # find playlistId:
-            s1 = 'playlistId:(.*?),'
+            s1 = 'playlistId:(.*?)}'
             match = re.search(s1,result, re.DOTALL)
             if match is not None:
                 playlistId = match.group(1).strip()
+                playlistId = playlistId.replace('\\n','')
+                playlistId = playlistId.replace('\\t','')
+                playlistId = playlistId.replace('\\r','')
+
                 xbmc.log('- playlistId ID %s' % playlistId)
 
-                # find applicationId
-                s1 = 'applicationId:(.*?),'
-                match = re.search(s1,result, re.DOTALL)
-                if match is not None:
-                    appID = match.group(1).strip()
-                    xbmc.log('- app ID %s' % appID)
+                appID = '2749759488'
 
-                    # https://player.cdn.tv1.eu/pservices/player/_x_s-2749759488/playlist?playout=hls&noflash=true&theov=2.64.0&pl=3159818244
-                    url = 'https://player.cdn.tv1.eu/pservices/player/_x_s-' + appID + '/' + playlistId + '/playlist?playout=hls&noflash=true&theov=2.64.0&pl=' + playlistId
-                    xbmc.log('- url%s' % url)
+                # https://player.cdn.tv1.eu/pservices/player/_x_s-2749759488/playlist?playout=hls&noflash=true&theov=2.64.0&pl=3159818244
+                url = 'https://player.cdn.tv1.eu/pservices/player/_x_s-' + appID + '/' + playlistId + '/playlist?playout=hls&noflash=true&theov=2.64.0&pl=' + playlistId
+                xbmc.log('- url%s' % url)
 
-                    self.playVideo(url)
+                self.playVideo(url)
 
 
 
